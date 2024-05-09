@@ -16,6 +16,7 @@
 <div id="map"></div>
 <script>
 var map;
+var previousInfoWindow = null;
 
 function initMap() {
   map = new google.maps.Map(document.getElementById('map'), {
@@ -66,11 +67,17 @@ function initMap() {
             // 添加點擊事件監聽器以顯示電影院詳細信息
             marker.addListener('click', function(placeCopy) {
               return function() {
+                // 關閉先前打開的信息窗口
+                if (previousInfoWindow) {
+                  previousInfoWindow.close();
+                }
+
                 var infowindow = new google.maps.InfoWindow({
                   content: '<strong>' + placeCopy.name + '</strong><br>' + '地址：' + placeCopy.vicinity + '<br>' + '評分：' + placeCopy.rating +
                            '<br><button onclick="navigateToPlace(' + placeCopy.geometry.location.lat() + ',' + placeCopy.geometry.location.lng() + ',\'' + placeCopy.vicinity + '\')">導航</button>'
                 });
                 infowindow.open(map, this);
+                previousInfoWindow = infowindow; // 設置先前打開的信息窗口為當前信息窗口
               };
             }(place)); // 使用閉包保留每個 place 的參考
           }
