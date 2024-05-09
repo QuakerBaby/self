@@ -100,11 +100,22 @@ function initMap() {
 
 // 導航至特定位置的函式
 function navigateToPlace(lat, lng, address) {
-  var currentLocation = map.getCenter();
-  var destination = lat + ',' + lng;
-  var url = 'https://www.google.com/maps/dir/?api=1&origin=' + currentLocation.lat() + ',' + currentLocation.lng() + '&destination=' + address;
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(position) {
+      var currentLocation = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      };
+      var destination = lat + ',' + lng;
+      var url = 'https://www.google.com/maps/dir/?api=1&origin=' + currentLocation.lat + ',' + currentLocation.lng + '&destination=' + address;
   
-  window.open(url, '_blank');
+      window.open(url, '_blank');
+    }, function() {
+      handleLocationError(true, map.getCenter());
+    });
+  } else {
+    handleLocationError(false, map.getCenter());
+  }
 }
 
 </script>
