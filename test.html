@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nearby Cinemas</title>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCGuq1R0q7x4Inz7NzJYqgS90fxsHFnqlc&libraries=places"></script>
+<style>
+  #map {
+    height: 100vh;
+    width: 100%;
+  }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+var map;
+
+function initMap() {
+  map = new google.maps.Map(document.getElementById('map'), {
+    zoom: 15 // 初始縮放等級，這裡設定為 15
+  });
+
+  // 獲取使用者的當前位置，並將地圖中心設置為該位置
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(position) {
+      var pos = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      };
+
+      map.setCenter(pos); // 設定地圖中心為使用者的當前位置
+      map.setZoom(15); // 設定地圖縮放級別
+
+      var userMarker = new google.maps.Marker({
+        position: pos,
+        map: map,
+        title: '您的位置',
+        icon: {
+          url: 'http://maps.google.com/mapfiles/ms/icons/red-dot.png' // 設置標記圖標為紅色
+        }
+      });
+
+      // 使用 PlacesService 查詢附近的電影院
+      var request = {
+        location: pos,
+        radius: '1500', // 將半徑設置為 1500
+        type: ['movie_theater']
+      };
+
+      var service = new google.maps.places.PlacesService(map);
+      service.nearbySearch(request, function(results, status) {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+          for (var i = 0; i < results.length; i++) {
+            var place = results[i];
+            var marker = new google.maps.Marker({
+              position: place.geometry.location,
+              map: map,
+              title: place.name,
+              icon: {
+                url: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png' // 設置標記圖標為藍色
+              }
+            });
+
+            // 添加點擊事件監聽器以顯示電影院詳細信息
+            marker.addListener('click', function(placeCopy) {
+              return function() {
+                var infowindow = new google.maps.InfoWindow({
+                  content: '<strong>' + placeCopy.name + '</strong><br>' + '地址：' + placeCopy.vicinity + '<br>' + '評分：' + placeCopy.rating +
+                           '<br><button onclick="navigateToPlace(' + placeCopy.geometry.location.lat() + ',' + placeCopy.geometry.location.lng() + ',\'' + placeCopy.vicinity + '\')">導航</button>'
+                });
+                infowindow.open(map, this);
+              };
+            }(place)); // 使用閉包保留每個 place 的參考
+          }
+        }
+      });
+
+      // 顯示搜尋範圍
+      var searchCircle = new google.maps.Circle({
+        strokeColor: '#00BFFF', // 設置邊界顏色為淺藍色
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+        fillColor: '#E0FFFF', // 設置填充顏色為淺天藍色
+        fillOpacity: 0.35,
+        map: map,
+        center: pos,
+        radius: 1500 // 將搜尋範圍的半徑設置為 1500
+      });
+
+    }, function() {
+      handleLocationError(true, map.getCenter());
+    });
+  } else {
+    // 如果瀏覽器不支持地理定位
+    handleLocationError(false, map.getCenter());
+  }
+}
+
+// 導航至特定位置的函式
+function navigateToPlace(lat, lng, address) {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(position) {
+      var currentLocation = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      };
+      var destination = lat + ',' + lng;
+      var url = 'https://www.google.com/maps/dir/?api=1&origin=' + currentLocation.lat + ',' + currentLocation.lng + '&destination=' + address;
+  
+      window.open(url, '_blank');
+    }, function() {
+      handleLocationError(true, map.getCenter());
+    });
+  } else {
+    handleLocationError(false, map.getCenter());
+  }
+}
+
+</script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCGuq1R0q7x4Inz7NzJYqgS90fxsHFnqlc&libraries=places&callback=initMap"></script>
+</body>
+</html>
